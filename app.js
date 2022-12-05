@@ -1,11 +1,30 @@
-const fs = require("fs");
+// ./app.js
+const http = require("http");
 
-const userName = "Light";
+const server = http.createServer((req, res) => {
+  console.log("Incoming request...");
+  console.log("Request http method:", req.method);
+  console.log("Request url:", req.url);
 
-fs.writeFile("./user-data.txt", "Name: " + userName, (error) => {
-  if (error) {
-    console.log(error);
-    return;
+  if (req.method === "POST") {
+    let body = "";
+    req.on("end", () => {
+      console.log("POST request data:", body);
+      const userName = body.split("=")[1];
+      res.end(`<p>Got the POST request!, The username is: ${userName}</p>`);
+    });
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+  } else {
+    res.setHeader("Content-Type", "text/html");
+    res.end(`
+  <form method="POST">
+    <input type="text" name="username" />
+    <button type="submit">Create User</button>
+  </form>
+  `);
   }
-  console.log("Wrote file successfully!");
 });
+
+server.listen(5000);
