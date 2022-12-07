@@ -1,42 +1,35 @@
+// ./app.js
 const express = require("express");
+const bodyParser = require("body-parser");
 
 const app = express();
+const inputFieldName = "username";
+let requestCounter = 0;
 
-// every incoming request or senting back response
-// is funneled through a bunch of middleware functions
-
-// you call next function if you don't want to send the response in
-// this middleware but to forward the request to the next middleware in line.
-
-// If you're not calling next, then any middleware after this middleware, if we had more than one, will not
-// be reached by this request.
-
-app.use((req, res, next) => {
-  let body = "";
-  req.on("end", () => {
-    const userName = body.split("=")[1];
-    if (userName) {
-      req.body = { name: userName };
-    }
-    next();
-  });
-  req.on("data", (chunk) => {
-    body += chunk;
-  });
+// work for all requests that start with slash after the domain
+app.use("/", (req, res, next) => {
+  console.log(
+    `Middleware in the first app.use!, get request ${++requestCounter} times!`
+  );
+  next();
 });
 
-app.use((req, res, next) => {
-  if (req.body) {
-    res.send(`<p>Got the POST request!, 
-    The username is: ${req.body.name}</p>`);
-  } else {
-    res.send(`
-  <form method="POST">
-    <input type="text" name="username" />
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// request's path has to be exact match /user
+app.post("/user", (req, res, next) => {
+  res.send(`<p>Got the POST request, 
+    The username is: ${req.body[inputFieldName]}</p>`);
+});
+
+// request not just filtering by HTTP method but also by path
+app.get("/", (req, res, next) => {
+  res.send(`
+  <form action="/user" method="POST">
+    <input type="text" name="${inputFieldName}" />
     <button type="submit">Create User</button>
   </form>
     `);
-  }
 });
 
 app.listen(5000, () => {
